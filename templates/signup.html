@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Sign up — RentPing{% endblock %}
+{% block content %}
+<h1>Start your 14-day free trial</h1>
+<p>No credit card required.</p>
+{% if error %}<p style="color:#b91c1c">{{ error }}</p>{% endif %}
+<form method="post" action="/signup">
+  <div class="row">
+    <label>Your name<input name="name" required></label>
+    <label>Email<input name="email" type="email" required></label>
+    <label>Password<input name="password" type="password" required minlength="6"></label>
+  </div>
+  <p><button class="btn">Create account</button></p>
+</form>
+<p>By signing up you confirm you have your tenants' permission to text them about rent. Every message honors STOP automatically.</p>
+{% endblock %}

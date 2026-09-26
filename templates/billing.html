@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Billing — RentPing{% endblock %}
+{% block content %}
+<h1>Billing</h1>
+<p>Current plan: <strong>{{ subscription.plan or "none" }}</strong> · status: {{ subscription.status }}
+{% if subscription.trial_ends_at %} · trial ends {{ subscription.trial_ends_at[:10] }}{% endif %}</p>
+{% if checkout == "success" %}
+<div class="banner banner-ok">✅ <strong>You're subscribed!</strong> Your 14-day free trial has started — no charge until it ends.</div>
+{% elif checkout == "cancelled" %}
+<div class="banner banner-info">Checkout was cancelled. No charge was made — pick a plan whenever you're ready.</div>
+{% endif %}
+{% if demo %}
+<div class="demo-banner">🧪 <strong>Demo mode:</strong> clicking Subscribe instantly activates the plan with a 14-day trial. No real charges.</div>
+{% endif %}
+<div class="stats">
+  {% for key, p in plans.items() %}
+  <div class="stat">
+    <b>${{ p.price }}/mo</b>
+    <div style="font-size:.85em;color:#555">or ${{ p.price * 10 }}/yr (2 months free)</div>
+    <div><strong>{{ p.name }}</strong></div>
+    <div style="font-size:.9em;color:#555">{{ p.blurb }}</div>
+    {% if subscription.plan == key and subscription.status in ("trialing", "active") %}
+    <div style="margin-top:8px"><span class="pill paid">Current plan</span></div>
+    {% else %}
+    <form method="post" action="/billing/subscribe" style="margin-top:8px">
+      <input type="hidden" name="plan" value="{{ key }}">
+      <select name="cycle" style="margin-bottom:6px">
+        <option value="monthly">Monthly — ${{ p.price }}/mo</option>
+        <option value="annual">Annual — ${{ p.price * 10 }}/yr</option>
+      </select><br>
+      <button class="btn">Subscribe — 14-day free trial</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+<p style="color:#666;font-size:.9em">Every plan starts with a 14-day free trial. Your card is collected at signup but isn't charged until the trial ends. Cancel anytime.</p>
+{% endblock %}

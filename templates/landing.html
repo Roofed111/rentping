@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}RentPing — Never chase rent again{% endblock %}
+{% block content %}
+<h1>Never chase rent again.</h1>
+<p style="font-size:1.2em">RentPing texts your tenants automatic rent reminders —
+3 days before, on the due date, and polite late nudges after. Tenants reply
+<strong>PAID</strong>. You watch the money come in. No phone calls, no awkward
+conversations, no spreadsheets.</p>
+<a class="btn" href="/signup" style="font-size:1.1em">Start 14-day free trial</a>
+<p><small>No credit card required. Set up in 5 minutes.</small></p>
+
+<div class="card">
+  <h2>How it works</h2>
+  <ol>
+    <li><strong>Add your properties</strong> — units, tenant names, phone numbers, rent amounts, due dates.</li>
+    <li><strong>We text automatically</strong> — reminders at −3 days, due date, +3 and +7 days late.</li>
+    <li><strong>Tenants reply PAID</strong> — your dashboard updates itself. Anyone can STOP to opt out.</li>
+  </ol>
+  <p>Tenants install nothing. They just get normal text messages.</p>
+</div>
+
+<h2>Simple pricing</h2>
+<div class="stats">
+  {% for key, p in plans.items() %}
+  <div class="stat">
+    <b>${{ p.price }}/mo</b>
+    <div><strong>{{ p.name }}</strong></div>
+    <div style="font-size:.9em;color:#555">{{ p.blurb }}</div>
+  </div>
+  {% endfor %}
+</div>
+<p><small>Annual = 10× monthly (2 months free). 14-day free trial on every plan.</small></p>
+
+<div class="card">
+  <h2>Built for small landlords</h2>
+  <p>AppFolio and Buildium are built for property managers with hundreds of units.
+  RentPing is for the person with a duplex who dreads the 5th-of-the-month text
+  conversation. One job, done perfectly.</p>
+</div>
+
+<a class="btn" href="/signup">Start free — it takes 5 minutes</a>
+{% endblock %}

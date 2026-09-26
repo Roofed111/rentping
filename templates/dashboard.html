@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — RentPing{% endblock %}
+{% block content %}
+
+{% if ran != "" %}
+  {% if ran == "0" %}
+  <div class="banner banner-info">💤 <span><strong>No reminders were due today.</strong>
+    Reminders only fire when one is actually due: 3 days before rent, on due day, and 3 &amp; 7 days late.
+    To see one fire right now, set a tenant's due day to the 28th and hit <strong>Run reminders now</strong> again.</span></div>
+  {% else %}
+  <div class="banner banner-ok">✅ <span><strong>Reminder run complete.</strong>
+    {% if ran == "1" %}1 message{% else %}{{ ran }} messages{% endif %} just went out to tenants.
+    See the message log below.</span></div>
+  {% endif %}
+{% endif %}
+
+{% if demo %}
+<div class="banner banner-info">🧪 <span><strong>Demo mode</strong> — texts are simulated. They print to the server console and appear in the log below as “sent (demo)”.</span></div>
+{% endif %}
+
+<div class="page-head">
+  <div>
+    <h1>Rent collection · {{ month }}</h1>
+    <p class="sub">Welcome back, {{ landlord["name"] }}. Here's where every dollar stands.</p>
+  </div>
+  <form method="post" action="/internal/run-reminders">
+    <button class="btn">▶&nbsp; Run reminders now</button>
+  </form>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <div class="label">Collected this month</div>
+    <div class="value">${{ "%.0f"|format(collected_rent) }}</div>
+    <div class="detail">of ${{ "%.0f"|format(total_rent) }} expected</div>
+    <div class="progress"><i style="width:{% if total_rent %}{{ (100*collected_rent/total_rent)|round|int }}{% else %}0{% endif %}%"></i></div>
+  </div>
+  <div class="stat">
+    <div class="label">On-time rate</div>
+    <div class="value">{{ on_time_rate }}%</div>
+    <div class="detail">{{ paid_this_month }} of {{ total_tenants }} tenants paid</div>
+  </div>
+  <div class="stat">
+    <div class="label">Tenants tracked</div>
+    <div class="value">{{ total_tenants }}</div>
+    <div class="detail">{{ properties|length }} propert{{ "ies" if properties|length != 1 else "y" }}</div>
+  </div>
+  <div class="stat">
+    <div class="label">Plan</div>
+    <div class="value" style="font-size:1.4em; padding-top:6px">{{ subscription.plan or "Trial" }}</div>
+    <div class="detail">{{ subscription.status }}{% if subscription.trial_ends %} · trial ends {{ subscription.trial_ends[:10] }}{% endif %}</div>
+  </div>
+</div>
+
+{% for prop in properties %}
+<div class="card">
+  <div class="prop-head">
+    <h2>🏠 {{ prop["name"] }}</h2>
+    <span class="prop-addr">{{ prop["address"] }}</span>
+  </div>
+  {% for unit in prop["units"] %}
+  <div class="unit-block">
+    <div class="unit-title">{{ unit["label"] }}</div>
+    <table>
+      <thead><tr><th>Tenant</th><th>Rent</th><th>Due</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
+      <tbody>
+      {% for t in unit["tenants"] %}
+      <tr>
+        <td><span class="tenant-name">{{ t["name"] }}</span><br><span class="tenant-phone">{{ t["phone"] }}</span></td>
+        <td><strong>${{ "%.2f"|format(t["rent_amount"]) }}</strong></td>
+        <td>{{ t["due_day"] }}{{ "st" if t["due_day"]==1 else "nd" if t["due_day"]==2 else "rd" if t["due_day"]==3 else "th" }} <span class="tenant-phone">({{ t["period"] }})</span></td>
+        <td><span class="pill {{ t["status"]["kind"] }}">{{ t["status"]["label"] }}</span>{% if t["opted_out"] %} <span class="pill muted">opted out</span>{% endif %}</td>
+        <td>
+          <div class="actions">
+            {% if t["status"]["kind"] != "paid" %}<form class="inline" method="post" action="/tenants/mark-paid"><input type="hidden" name="tenant_id" value="{{ t["id"] }}"><button class="btn btn-ghost btn-sm">Mark paid</button></form>{% endif %}
+            <form class="inline" method="post" action="/tenants/opt-out"><input type="hidden" name="tenant_id" value="{{ t["id"] }}"><button class="btn btn-ghost btn-sm">{{ "Re-subscribe" if t["opted_out"] else "Opt out" }}</button></form>
+            <form class="inline" method="post" action="/tenants/delete" onsubmit="return confirm('Remove {{ t["name"] }}?')"><input type="hidden" name="tenant_id" value="{{ t["id"] }}"><button class="btn btn-danger-ghost btn-sm">✕</button></form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <form method="post" action="/tenants/add">
+      <input type="hidden" name="unit_id" value="{{ unit["id"] }}">
+      <div class="form-grid">
+        <label>Tenant name<input name="name" required placeholder="Jane Smith"></label>
+        <label>Phone<input name="phone" required placeholder="+15551234567"></label>
+        <label>Monthly rent $<input name="rent_amount" type="number" step="0.01" min="1" required placeholder="1850"></label>
+        <label>Due day of month (1–31)<input name="due_day" type="number" min="1" max="31" required placeholder="1"></label>
+        <div><button class="btn btn-ghost">+ Add tenant</button></div>
+      </div>
+    </form>
+  </div>
+  {% endfor %}
+  <form method="post" action="/units/add">
+    <input type="hidden" name="property_id" value="{{ prop["id"] }}">
+    <div class="form-grid">
+      <label>New unit label<input name="label" required placeholder="Unit B"></label>
+      <div><button class="btn btn-ghost">+ Add unit</button></div>
+    </div>
+  </form>
+</div>
+{% else %}
+<div class="card">
+  <div class="empty"><span class="big">🏠</span>
+    <strong>No properties yet.</strong><br>
+    Add your first property below to start tracking rent.
+  </div>
+</div>
+{% endfor %}
+
+<div class="card">
+  <h2>➕ Add a property</h2>
+  <form method="post" action="/properties/add">
+    <div class="form-grid" style="margin-top:0">
+      <label>Property name<input name="name" required placeholder="Maple St Duplex"></label>
+      <label>Address<input name="address" placeholder="123 Maple St, Concord CA"></label>
+      <div><button class="btn">Add property</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="prop-head">
+    <h2>💬 Message log <span class="sub">latest 30</span></h2>
+  </div>
+  <table>
+    <thead><tr><th>When</th><th></th><th>Tenant</th><th>Message</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for m in messages %}
+    <tr>
+      <td style="white-space:nowrap" class="tenant-phone">{{ m["created_at"][:16].replace("T"," ") }}</td>
+      <td class="dir {{ "dir-out" if m["direction"]=="out" else "dir-in" }}">{{ "→" if m["direction"]=="out" else "←" }}</td>
+      <td>{{ m["tenant_name"] or "—" }}</td>
+      <td class="msg-body">{{ m["body"][:110] }}</td>
+      <td><span class="tenant-phone">{{ m["status"] }}</span></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5"><div class="empty"><span class="big">💬</span>No messages yet — hit <strong>Run reminders now</strong> above to send the first batch.</div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p style="color:var(--muted); font-size:.88em; margin:16px 0 0">The daily scheduler calls <code>/internal/run-reminders</code> automatically. The button above triggers the same run on demand — no double-texting, each reminder fires once per period.</p>
+</div>
+
+{% endblock %}

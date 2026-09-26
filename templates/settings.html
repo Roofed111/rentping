@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Settings — RentPing{% endblock %}
+{% block content %}
+<h1>Message templates</h1>
+<p>Make the texts sound like you. Available placeholders:
+<code>{name}</code> <code>{amount}</code> <code>{property}</code> <code>{due_date}</code></p>
+{% if saved %}<p style="color:#166534"><strong>Saved ✓</strong></p>{% endif %}
+<form method="post" action="/settings">
+  <label><strong>3 days before due</strong><br>
+    <textarea name="tpl_before" rows="2" cols="80">{{ tpl["tpl_before"] }}</textarea></label><br><br>
+  <label><strong>Due date</strong><br>
+    <textarea name="tpl_due" rows="2" cols="80">{{ tpl["tpl_due"] }}</textarea></label><br><br>
+  <label><strong>3 days late</strong><br>
+    <textarea name="tpl_late3" rows="2" cols="80">{{ tpl["tpl_late3"] }}</textarea></label><br><br>
+  <label><strong>7 days late</strong><br>
+    <textarea name="tpl_late7" rows="2" cols="80">{{ tpl["tpl_late7"] }}</textarea></label><br><br>
+  <button class="btn">Save templates</button>
+</form>
+{% endblock %}
